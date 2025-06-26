@@ -2,12 +2,12 @@ name: Deploy Toolkit
 on:
   push:
     branches: [ main ]
-    paths: [ ice-cream-dataops/** ]
+    paths:   [ ice-cream-dataops/** ]
   workflow_dispatch:
 
 env:
   PYTHON_VERSION: '3.11'
-  TOOLKIT_VERSION: '0.5.43'   # ← bump so --dry-run exists
+  TOOLKIT_VERSION: '0.5.30'          # ← stay on this version
 
 jobs:
   build-modules:
@@ -17,8 +17,7 @@ jobs:
     environment: ${{ matrix.environment }}
     runs-on: ubuntu-latest
 
-    # ────────── global env for the job ──────────
-    env:
+    env:                              # job-level env
       LOGIN_FLOW: client_credentials
       CDF_CLUSTER: westeurope-1
       CDF_PROJECT: cdf-bootcamp-57-${{ matrix.environment }}
@@ -43,13 +42,18 @@ jobs:
       - name: Install Cognite Toolkit
         run: pip install --upgrade "cognite-toolkit==${{ env.TOOLKIT_VERSION }}"
 
-      # ── DEBUG: render configs, print first 30 lines of the schedule YAML ──
+      # ── DEBUG STEP ──────────────────────────────────────────────────────────
       - name: Show rendered schedules for debugging
         run: |
           echo "Rendered file for ${{ matrix.environment }}:"
-          cdf build --env=${{ matrix.environment }} --dry-run --output-dir out
-          nl -ba out/modules/**/2.schedules.Schedule.yaml | sed -n '1,30p'
-      # ────────────────────────────────────────────────────────────────────
+          # Run build, render files into ./out, let it fail if YAML invalid
+          set +e
+          cdf build --env=${{ matrix.environment }} --output-dir out
+          BUILD_RC=$?
+          # Print the first 30 numbered lines of the rendered schedule file
+          nl -ba out/modules/**/2.schedules.Schedule.yaml | sed -n '1,30p' || true
+          exit $BUILD_RC
+      # ────────────────────────────────────────────────────────────────────────
 
       - name: Build Toolkit Configurations
         run: cdf build --env=${{ matrix.environment }}
