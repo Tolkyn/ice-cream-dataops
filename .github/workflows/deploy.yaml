@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - fix-prod-deploy
     paths:
       - ice-cream-dataops/**
   workflow_dispatch:
@@ -11,14 +12,13 @@ env:
   PYTHON_VERSION: '3.11'
   # Change the TOOLKIT_VERSION depending on which version you are using
   TOOLKIT_VERSION: '0.5.30'
-
 jobs:
   build-modules:
     strategy:
       matrix:
         environment:
-          - test
-          - prod
+           - test
+           - prod
     environment: ${{ matrix.environment }}
     runs-on: ubuntu-latest
     env:
@@ -40,24 +40,12 @@ jobs:
     name: Build & Deploy
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
       - name: Install Cognite Toolkit
         run: pip install cognite-toolkit==${{ env.TOOLKIT_VERSION }}
-
-      # ── DEBUG STEP: render Toolkit configs and show first lines of the problem schedule ──
-      - name: Show rendered schedules for debugging
-        run: |
-          echo "Rendered file for ${{ matrix.environment }}:"
-          cdf build --env=${{ matrix.environment }} --dry-run --output-dir out
-          nl -ba out/modules/**/2.schedules.Schedule.yaml | sed -n '1,30p'
-      # ────────────────────────────────────────────────────────────────────────────────────
-
       - name: Build Toolkit Configurations
         run: cdf build --env=${{ matrix.environment }}
-
       - name: Deploy Toolkit Configurations
         run: cdf deploy --env=${{ matrix.environment }}
