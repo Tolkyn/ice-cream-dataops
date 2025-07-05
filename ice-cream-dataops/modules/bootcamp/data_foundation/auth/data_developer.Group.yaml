@@ -1,5 +1,6 @@
 name: data_developer
 sourceId: {{ data_developer_source_id }}
+
 capabilities:
   - annotationsAcl:
       actions: [READ, WRITE]
@@ -85,4 +86,3 @@ capabilities:
       actions: [READ, WRITE]
       scope:
         all: {}
-
