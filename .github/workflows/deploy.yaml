@@ -46,11 +46,9 @@ jobs:
       - name: Show rendered schedules for debugging
         run: |
           echo "Rendered file for ${{ matrix.environment }}:"
-          # Run build, render files into ./out, let it fail if YAML invalid
           set +e
-          cdf build --env=${{ matrix.environment }} --output-dir out
+          cdf build --env=${{ matrix.environment }} --build-dir out
           BUILD_RC=$?
-          # Print the first 30 numbered lines of the rendered schedule file
           nl -ba out/modules/**/2.schedules.Schedule.yaml | sed -n '1,30p' || true
           exit $BUILD_RC
       # ────────────────────────────────────────────────────────────────────────
